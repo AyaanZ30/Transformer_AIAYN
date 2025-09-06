@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn  
 import math
+
+from torch.nn.modules import transformer
 from transformer_encoder import Encoder, EncoderBlock, FeedForwardBlock, InputEmbeddings, MultiHeadAttentionBlock, PositionalEncoding
 from transformer_decoder import Decoder, DecoderBlock, ProjectionLayer
 
@@ -50,7 +52,7 @@ def build_transformer(
     dim_ff : int = 2048,
     ) -> Transformer:
     # creating the embedding layers 
-    src_embed = InputEmbeddings(dim_model, src_vocab_size)
+    src_emb = InputEmbeddings(dim_model, src_vocab_size)
     target_emb = InputEmbeddings(dim_model, target_vocab_size)
 
     # creating the positional encodings
@@ -79,7 +81,23 @@ def build_transformer(
     decoder = Decoder(layers = nn.ModuleList(decoder_blocks))
 
     # projection layer 
-    
+    projection_layer = ProjectionLayer(dim_model, target_vocab_size)
+
+    # stacking everything together
+    transformer = Transformer(
+        encoder, 
+        decoder, 
+        src_emb,
+        target_emb,
+        src_pos,
+        target_pos,
+        projection_layer
+    )
+    for parameter in transformer.parameters():
+        if parameter.dim() > 1:
+            nn.init.xavier_uniform_(parameter)
+    return transformer
+
 
 
     
