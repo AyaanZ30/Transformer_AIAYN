@@ -9,6 +9,8 @@ from tokenizers.models import WordLevel
 from tokenizers.trainers import WordLevelTrainer
 from tokenizers.pre_tokenizers import Whitespace
 
+from dataset import BilingualDataset
+
 def get_all_sentences(dataset, language):
     for item in dataset:
         sentences = item['translation']
@@ -38,6 +40,33 @@ def get_dataset(config):
     val_data_size = len(raw_dataset) - train_data_size
 
     train_data_raw, val_data_raw = random_split(raw_dataset, [train_data_size, val_data_size])
+    
+    # building actual training data consisting of both src and target language text for supervised training
+    bilingual_train_dataset = BilingualDataset(
+        train_data_raw, tokenizer_src_lang, tokenizer_target_lang,
+        config['lang_src'], config['lang_target'], config['seq_len'] 
+    )
+    bilingual_val_dataset = BilingualDataset(
+        val_data_raw, tokenizer_src_lang, tokenizer_target_lang,
+        config['lang_src'], config['lang_target'], config['seq_len'] 
+    )
+
+    max_seq_len_src = 0
+    max_seq_len_target = 0
+
+    for item in raw_dataset:
+        src_ids = tokenizer_src_lang.encode(item['translation'][config['lang_src']]).ids
+        target_ids = tokenizer_target_lang.encode(item['translation'][config['lang_target']]).ids
+
+        max_seq_len_src = max(len(src_ids), max_seq_len_src)
+        max_seq_len_target = max(len(target_ids), max_seq_len_target)
+    
+    print(f'Max length for source language sentence : {max_seq_len_src} ({config['lang_src']})')
+    print(f'Max length for target language sentence : {max_seq_len_src} ({config['lang_target']})')
+
+    train
+        
+
     
 
 
